@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Chilako — Kiosco de Lealtad</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root {
+    --green: #2E8B3A;
+    --green-dark: #1f6128;
+    --green-light: #4CAF58;
+    --cream: #F5F0E8;
+    --cream-dark: #EDE8DF;
+    --gold: #c8860a;
+    --gold-light: #e8a020;
+    --white: #fff;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --red: #e53935;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--green);
+    font-family: 'Nunito Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Background decoration */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; left: -150px;
+    width: 400px; height: 400px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* HEADER */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    background: rgba(46,139,58,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: var(--cream);
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .header-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: white;
+  }
+  .header-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4CAF58;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* MAIN CARD */
+  .card {
+    background: var(--cream);
+    border-radius: 24px;
+    width: min(480px, calc(100vw - 32px));
+    padding: 32px;
+    margin-top: 80px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1;
+    animation: slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* STATES */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* SCAN STATE */
+  .scan-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .scan-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  #qr-reader {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #111;
+    width: 100% !important;
+  }
+  #qr-reader video { border-radius: 16px; }
+  #qr-reader img { display: none !important; }
+  #qr-reader__scan_region { border-radius: 16px; }
+  #qr-reader__dashboard { display: none !important; }
+
+  .scan-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .scan-hint-icon { font-size: 16px; }
+
+  /* MANUAL INPUT */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--cream-dark); }
+  .divider-text { font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+  .input-group { display: flex; gap: 8px; }
+  .token-input {
+    flex: 1;
+    border: 2px solid var(--cream-dark);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .token-input:focus { border-color: var(--green); }
+  .token-input::placeholder { color: #bbb; }
+
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: var(--green-dark); }
+  .btn-full { width: 100%; padding: 16px; font-size: 16px; margin-top: 8px; }
+  .btn-outline { background: transparent; border: 2px solid var(--cream-dark); color: var(--text-muted); }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+  /* LOADING STATE */
+  .loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 0;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--cream-dark);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  /* MEMBER CARD */
+  .member-header {
+    background: var(--green);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .member-header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .member-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 4px;
+  }
+  .member-stamps-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .member-stamps-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+  }
+  .member-stamps-badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* STAMP GRID PREVIEW */
+  .stamps-preview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .stamp-dot {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stamp-dot.filled { background: var(--green); }
+  .stamp-dot.empty { background: var(--cream-dark); border: 2px dashed #ccc; }
+  .stamp-dot.new { background: var(--gold); animation: stampPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes stampPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+  /* REWARD BANNER */
+  .reward-banner {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .reward-banner-icon { font-size: 32px; flex-shrink: 0; }
+  .reward-banner-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 2px;
+  }
+  .reward-banner-desc { font-size: 12px; color: rgba(255,255,255,0.85); line-height: 1.4; }
+
+  /* NEXT REWARD INFO */
+  .next-reward {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    border: 1px solid var(--cream-dark);
+  }
+  .next-reward-icon { font-size: 22px; flex-shrink: 0; }
+  .next-reward-label { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .next-reward-text { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 2px; }
+
+  /* ERROR STATE */
+  .error-icon { font-size: 48px; text-align: center; margin-bottom: 12px; }
+  .error-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .error-desc { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px; line-height: 1.6; }
+
+  /* SUCCESS STAMP RESULT */
+  .result-stamp {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--cream-dark);
+  }
+  .result-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .result-value { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--green); }
+  .result-arrow { font-size: 16px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">
+      <img src="https://lvbcgsaccrqctcpogazh.supabase.co/storage/v1/object/public/assets/chilako-logo-transparent.png" alt="Chilako">
+    </div>
+    <div>
+      <div class="header-name">chilako</div>
+      <div class="header-sub">Programa de Lealtad</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    Kiosco Activo
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card" id="mainCard">
+
+  <!-- STATE: SCAN -->
+  <div class="state active" id="stateScan">
+    <div class="scan-title">Escanear tarjeta</div>
+    <div class="scan-subtitle">Pide al cliente que muestre el QR de su Google Wallet</div>
+    <div id="qr-reader"></div>
+    <div class="scan-hint">
+      <span class="scan-hint-icon">📱</span>
+      Apunta la cámara al código QR del cliente
+    </div>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">o ingresa manualmente</div>
+      <div class="divider-line"></div>
+    </div>
+    <div class="input-group">
+      <input type="text" class="token-input" id="manualToken" placeholder="Pega el token del cliente...">
+      <button class="btn btn-green" onclick="processManualToken()">✓</button>
+    </div>
+  </div>
+
+  <!-- STATE: LOADING -->
+  <div class="state" id="stateLoading">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">Procesando sello...</div>
+    </div>
+  </div>
+
+  <!-- STATE: MEMBER PREVIEW (before stamping) -->
+  <div class="state" id="stateMember">
+    <div class="member-header">
+      <div class="member-name" id="previewName">—</div>
+      <div class="member-stamps-row">
+        <div class="member-stamps-text" id="previewStampsText">0 sellos acumulados</div>
+        <div class="member-stamps-badge" id="previewBadge">0/10</div>
+      </div>
+    </div>
+    <div class="stamps-preview" id="previewGrid"></div>
+    <div class="next-reward" id="previewNextReward">
+      <div class="next-reward-icon">🎯</div>
+      <div>
+        <div class="next-reward-label">Próxima recompensa</div>
+        <div class="next-reward-text" id="previewNextText">—</div>
+      </div>
+    </div>
+    <button class="btn btn-green btn-full" id="stampBtn" onclick="confirmStamp()">
+      🌮 Registrar sello de esta visita
+    </button>
+    <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="goToScan()">
+      Cancelar
+    </button>
+  </div>
+
+  <!-- STATE: SUCCESS -->
+  <div class="state" id="stateSuccess">
+    <div class="member-header">
+      <div class="member-name" id="successName">—</div>
+      <div class="member-stamps-row">
+        <div class="member-stamps-text" id="successStampsText">—</div>
+        <div class="member-stamps-badge" id="successBadge">—</div>
+      </div>
+    </div>
+    <div id="rewardBanner" style="display:none" class="reward-banner">
+      <div class="reward-banner-icon">🎉</div>
+      <div>
+        <div class="reward-banner-title" id="rewardTitle">¡Premio desbloqueado!</div>
+        <div class="reward-banner-desc" id="rewardDesc">—</div>
+      </div>
+    </div>
+    <div class="result-stamp">
+      <div>
+        <div class="result-label">Sellos anteriores</div>
+        <div class="result-value" id="prevStamps">0</div>
+      </div>
+      <div class="result-arrow">→</div>
+      <div>
+        <div class="result-label">Sellos ahora</div>
+        <div class="result-value" id="newStamps" style="color:var(--green)">1</div>
+      </div>
+    </div>
+    <div class="next-reward" id="successNextReward">
+      <div class="next-reward-icon">🎯</div>
+      <div>
+        <div class="next-reward-label">Próxima recompensa</div>
+        <div class="next-reward-text" id="successNextText">—</div>
+      </div>
+    </div>
+    <button class="btn btn-green btn-full" onclick="goToScan()">
+      ✓ Listo — Siguiente cliente
+    </button>
+  </div>
+
+  <!-- STATE: ERROR -->
+  <div class="state" id="stateError">
+    <div class="error-icon">⚠️</div>
+    <div class="error-title" id="errorTitle">QR inválido</div>
+    <div class="error-desc" id="errorDesc">El código QR no es válido o ya fue usado. Pide al cliente que abra su Google Wallet y muestre el QR actualizado.</div>
+    <button class="btn btn-green btn-full" onclick="goToScan()">
+      Intentar de nuevo
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const API = 'https://chilako-loyalty.onrender.com';
+  let currentQRToken = null;
+  let currentMemberData = null;
+  let scanner = null;
+  let scannerStarted = false;
+
+  // ── State management ──────────────────────────────────────────────────────
+  function showState(id) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ── Stamp grid renderer ───────────────────────────────────────────────────
+  function renderGrid(containerId, stamps, highlight = false) {
+    const grid = document.getElementById(containerId);
+    grid.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const d = document.createElement('div');
+      if (highlight && i === stamps - 1) {
+        d.className = 'stamp-dot new';
+        d.innerHTML = `<svg viewBox="0 0 100 100" width="22" height="22"><polygon points="50,5 95,85 5,85" fill="#9b6200" stroke="#7a4c00" stroke-width="4"/><polygon points="50,20 80,78 20,78" fill="#c8860a"/><circle cx="50" cy="58" r="6" fill="#9b6200"/><circle cx="38" cy="70" r="5" fill="#9b6200"/><circle cx="62" cy="70" r="5" fill="#9b6200"/></svg>`;
+      } else if (i < stamps) {
+        d.className = 'stamp-dot filled';
+        d.innerHTML = `<svg viewBox="0 0 100 100" width="20" height="20"><polygon points="50,5 95,85 5,85" fill="#9b6200" stroke="#7a4c00" stroke-width="4"/><polygon points="50,20 80,78 20,78" fill="#c8860a"/><circle cx="50" cy="58" r="6" fill="#9b6200"/><circle cx="38" cy="70" r="5" fill="#9b6200"/><circle cx="62" cy="70" r="5" fill="#9b6200"/></svg>`;
+      } else {
+        d.className = 'stamp-dot empty';
+      }
+      grid.appendChild(d);
+    }
+  }
+
+  function getNextRewardText(stamps) {
+    if (stamps < 5) return `Faltan ${5 - stamps} sello${5-stamps!==1?'s':''} → Chilaquiles sencillos`;
+    if (stamps < 10) return `Faltan ${10 - stamps} sello${10-stamps!==1?'s':''} → Combo premium`;
+    return '¡Programa completado!';
+  }
+
+  // ── QR Validation (before stamping) ──────────────────────────────────────
+  async function validateAndPreview(qrToken) {
+    currentQRToken = qrToken;
+    showState('stateLoading');
+
+    try {
+      const res = await fetch(`${API}/validate-qr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qrToken })
+      });
+      const data = await res.json();
+
+      if (!data.valid) {
+        showError('QR inválido', 'El código QR no es válido. Pide al cliente que abra su Google Wallet y muestre el QR actualizado.');
+        return;
+      }
+
+      // Show member preview
+      currentMemberData = data;
+      document.getElementById('previewName').textContent = data.memberName;
+      document.getElementById('previewStampsText').textContent = `${data.stamps} sello${data.stamps!==1?'s':''} acumulados`;
+      document.getElementById('previewBadge').textContent = `${data.stamps}/10`;
+      document.getElementById('previewNextText').textContent = getNextRewardText(data.stamps);
+      renderGrid('previewGrid', data.stamps);
+      showState('stateMember');
+
+    } catch (err) {
+      showError('Error de conexión', 'No se pudo conectar con el servidor. Verifica tu conexión a internet.');
+    }
+  }
+
+  // ── Confirm stamp ─────────────────────────────────────────────────────────
+  async function confirmStamp() {
+    document.getElementById('stampBtn').disabled = true;
+    showState('stateLoading');
+
+    try {
+      const res = await fetch(`${API}/stamp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qrToken: currentQRToken })
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        showError('Error al sellar', data.error || 'No se pudo registrar el sello. Intenta de nuevo.');
+        return;
+      }
+
+      // Show success
+      document.getElementById('successName').textContent = data.memberName;
+      document.getElementById('successStampsText').textContent = `${data.newStamps} sello${data.newStamps!==1?'s':''} acumulados`;
+      document.getElementById('successBadge').textContent = `${data.newStamps}/10`;
+      document.getElementById('prevStamps').textContent = data.previousStamps;
+      document.getElementById('newStamps').textContent = data.newStamps;
+      document.getElementById('successNextText').textContent = getNextRewardText(data.newStamps);
+      renderGrid('successGrid', data.newStamps, true);
+
+      if (data.rewardUnlocked) {
+        const banner = document.getElementById('rewardBanner');
+        banner.style.display = 'flex';
+        document.getElementById('rewardTitle').textContent = `¡Premio: ${data.rewardUnlocked.name}!`;
+        document.getElementById('rewardDesc').textContent = data.rewardUnlocked.description;
+      } else {
+        document.getElementById('rewardBanner').style.display = 'none';
+      }
+
+      showState('stateSuccess');
+
+    } catch (err) {
+      showError('Error de conexión', 'No se pudo conectar con el servidor.');
+    }
+  }
+
+  // ── Manual token ──────────────────────────────────────────────────────────
+  function processManualToken() {
+    const token = document.getElementById('manualToken').value.trim();
+    if (!token) return;
+    document.getElementById('manualToken').value = '';
+    validateAndPreview(token);
+  }
+
+  // ── Error state ───────────────────────────────────────────────────────────
+  function showError(title, desc) {
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorDesc').textContent = desc;
+    showState('stateError');
+  }
+
+  // ── Go back to scan ───────────────────────────────────────────────────────
+  function goToScan() {
+    currentQRToken = null;
+    currentMemberData = null;
+    document.getElementById('stampBtn').disabled = false;
+    showState('stateScan');
+    if (!scannerStarted) startScanner();
+  }
+
+  // ── QR Scanner ────────────────────────────────────────────────────────────
+  function startScanner() {
+    scanner = new Html5Qrcode('qr-reader');
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        scanner.stop().catch(() => {});
+        scannerStarted = false;
+        validateAndPreview(decodedText);
+      },
+      () => {}
+    ).then(() => {
+      scannerStarted = true;
+    }).catch(() => {
+      // Camera not available — manual input only
+      document.getElementById('qr-reader').innerHTML = 
+        '<div style="background:#222;border-radius:16px;padding:40px;text-align:center;color:#888;font-size:13px;">📷 Cámara no disponible<br>Usa el ingreso manual</div>';
+    });
+  }
+
+  // ── Enter key on manual input ─────────────────────────────────────────────
+  document.getElementById('manualToken').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') processManualToken();
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  startScanner();
+
+  // Add stamps grid to success state (it was missing)
+  const successState = document.getElementById('stateSuccess');
+  const grid = document.createElement('div');
+  grid.className = 'stamps-preview';
+  grid.id = 'successGrid';
+  successState.querySelector('.result-stamp').before(grid);
+</script>
+</body>
+</html>
