@@ -533,10 +533,18 @@
         body: JSON.stringify({ qrToken: currentQRToken })
       });
       const data = await res.json();
+
+      // Already stamped today
+      if (data.alreadyStampedToday) {
+        showError('Sello ya registrado hoy', `Este cliente ya recibió su sello del día de hoy. Podrá recibir otro sello mañana.\n\nSellos acumulados: ${data.currentStamps}/10`);
+        return;
+      }
+
       if (!data.success) {
         showError('Error al sellar', data.error || 'No se pudo registrar el sello.');
         return;
       }
+
       // Success
       document.getElementById('successName').textContent = data.memberName;
       document.getElementById('successStampsText').textContent = `${data.newStamps} sello${data.newStamps!==1?'s':''} acumulados`;
@@ -548,8 +556,8 @@
       const banner = document.getElementById('rewardBanner');
       if (data.rewardUnlocked) {
         banner.style.display = 'flex';
-        document.getElementById('rewardTitle').textContent = `¡Premio: ${data.rewardUnlocked.name}!`;
-        document.getElementById('rewardDesc').textContent = data.rewardUnlocked.description;
+        document.getElementById('rewardTitle').textContent = `🎉 ¡Premio desbloqueado: ${data.rewardUnlocked.name}!`;
+        document.getElementById('rewardDesc').textContent = `${data.rewardUnlocked.description}\n\n⚠️ Aplica el descuento en Odoo POS antes de continuar.`;
       } else {
         banner.style.display = 'none';
       }
