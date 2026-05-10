@@ -556,8 +556,14 @@
       const banner = document.getElementById('rewardBanner');
       if (data.rewardUnlocked) {
         banner.style.display = 'flex';
-        document.getElementById('rewardTitle').textContent = `🎉 ¡Premio desbloqueado: ${data.rewardUnlocked.name}!`;
-        document.getElementById('rewardDesc').textContent = `${data.rewardUnlocked.description}\n\n⚠️ Aplica el descuento en Odoo POS antes de continuar.`;
+        document.getElementById('rewardTitle').textContent = `🎉 ¡Premio: ${data.rewardUnlocked.name}!`;
+        const couponHtml = data.rewardUnlocked.couponCode
+          ? `<div style="margin-top:8px;background:rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-family:monospace;font-size:18px;font-weight:900;letter-spacing:3px;color:white">${data.rewardUnlocked.couponCode}</div><div style="font-size:11px;margin-top:4px;opacity:0.85">⚠️ Ingresa este código en Odoo POS para aplicar el descuento</div>`
+          : '';
+        document.getElementById('rewardDesc').innerHTML = couponHtml;
+        if (data.cycleReset) {
+          document.getElementById('successNextText').textContent = '🔄 Tarjeta reiniciada — ¡nuevo ciclo!';
+        }
       } else {
         banner.style.display = 'none';
       }
