@@ -379,8 +379,8 @@
   }
 
   function getNextText(stamps) {
-    if (stamps < 5) return `Faltan ${5-stamps} sello${5-stamps!==1?'s':''} → Chilaquiles sencillos`;
-    if (stamps < 10) return `Faltan ${10-stamps} sello${10-stamps!==1?'s':''} → Combo premium`;
+    if (stamps < 6)  return `Faltan ${6-stamps} visita${6-stamps!==1?'s':''} → Chilaquiles sencillos`;
+    if (stamps < 11) return `Faltan ${11-stamps} visita${11-stamps!==1?'s':''} → Combo premium`;
     return '¡Programa completado! 🏆';
   }
 
