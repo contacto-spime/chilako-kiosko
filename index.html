@@ -216,8 +216,13 @@
     <div id="tabQRContent">
       <div class="section-title">Escanear QR</div>
       <div class="section-sub">Pide al cliente que abra su Google Wallet y muestre el código QR</div>
+      <div id="cameraBtn" style="text-align:center;padding:12px 0 8px">
+        <button class="btn btn-green btn-full" style="font-size:18px;padding:20px;border-radius:16px;letter-spacing:0.5px" onclick="openCamera()">
+          📷 Abrir cámara
+        </button>
+      </div>
       <div id="qr-reader"></div>
-      <div class="scan-hint">📱 Apunta la cámara al QR del cliente</div>
+      <div class="scan-hint" id="scanHint" style="display:none">📱 Apunta la cámara al QR del cliente</div>
     </div>
 
     <!-- Tab: Search by name/phone -->
@@ -396,8 +401,7 @@
   }
 
   // ── QR SCANNER ──────────────────────────────────────────────────────────────
-  async function startScanner() {
-    // Stop and destroy previous instance before creating a new one
+  async function stopScanner() {
     if (scanner) {
       try {
         if (scannerActive) await scanner.stop();
@@ -406,9 +410,15 @@
       scanner = null;
       scannerActive = false;
     }
-
-    // Clear the div so Html5Qrcode can mount fresh
     document.getElementById('qr-reader').innerHTML = '';
+  }
+
+  async function openCamera() {
+    // Hide button, show hint
+    document.getElementById('cameraBtn').style.display = 'none';
+    document.getElementById('scanHint').style.display = 'flex';
+
+    await stopScanner();
 
     scanner = new Html5Qrcode('qr-reader');
     scanner.start(
@@ -424,7 +434,16 @@
     .catch(() => {
       document.getElementById('qr-reader').innerHTML =
         '<div style="background:#222;border-radius:16px;padding:32px;text-align:center;color:#888;font-size:13px;line-height:1.6;">📷 Cámara no disponible<br>Usa las otras opciones</div>';
+      document.getElementById('cameraBtn').style.display = 'block';
+      document.getElementById('scanHint').style.display = 'none';
     });
+  }
+
+  // startScanner now just resets the QR tab UI (camera requires user tap)
+  async function startScanner() {
+    await stopScanner();
+    document.getElementById('cameraBtn').style.display = 'block';
+    document.getElementById('scanHint').style.display = 'none';
   }
 
   // ── SEARCH BY NAME/PHONE ────────────────────────────────────────────────────
@@ -598,8 +617,7 @@
     switchTab('qr');
   }
 
-  // Init
-  startScanner();
+  // Init — camera requires user tap on iOS, button is shown by default
 </script>
 </body>
 </html>
