@@ -236,7 +236,7 @@
     <!-- Tab: Short code -->
     <div id="tabCodeContent" style="display:none">
       <div class="section-title">Código de 6 dígitos</div>
-      <div class="section-sub">El cliente puede dictar su código visible en Google Wallet</div>
+      <div class="section-sub">Ingresa los últimos 6 dígitos del teléfono del cliente</div>
       <div class="code-inputs">
         <input type="text" class="code-digit" maxlength="1" id="d0" oninput="onDigit(0)" onkeydown="onDigitKey(event,0)">
         <input type="text" class="code-digit" maxlength="1" id="d1" oninput="onDigit(1)" onkeydown="onDigitKey(event,1)">
@@ -380,21 +380,36 @@
   }
 
   // ── TABS ────────────────────────────────────────────────────────────────────
+  const TAB_ID = { qr: 'QR', search: 'Search', code: 'Code' };
+
   function switchTab(tab) {
     ['qr','search','code'].forEach(t => {
-      document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}`).classList.remove('active');
-      document.getElementById(`tab${t.charAt(0).toUpperCase()+t.slice(1)}Content`).style.display = 'none';
+      document.getElementById(`tab${TAB_ID[t]}`).classList.remove('active');
+      document.getElementById(`tab${TAB_ID[t]}Content`).style.display = 'none';
     });
-    document.getElementById(`tab${tab.charAt(0).toUpperCase()+tab.slice(1)}`).classList.add('active');
-    document.getElementById(`tab${tab.charAt(0).toUpperCase()+tab.slice(1)}Content`).style.display = 'block';
+    document.getElementById(`tab${TAB_ID[tab]}`).classList.add('active');
+    document.getElementById(`tab${TAB_ID[tab]}Content`).style.display = 'block';
 
-    if (tab === 'qr' && !scannerActive) startScanner();
+    if (tab === 'qr') startScanner();
     if (tab === 'search') setTimeout(() => document.getElementById('searchInput').focus(), 100);
     if (tab === 'code') setTimeout(() => document.getElementById('d0').focus(), 100);
   }
 
   // ── QR SCANNER ──────────────────────────────────────────────────────────────
-  function startScanner() {
+  async function startScanner() {
+    // Stop and destroy previous instance before creating a new one
+    if (scanner) {
+      try {
+        if (scannerActive) await scanner.stop();
+        await scanner.clear();
+      } catch(e) {}
+      scanner = null;
+      scannerActive = false;
+    }
+
+    // Clear the div so Html5Qrcode can mount fresh
+    document.getElementById('qr-reader').innerHTML = '';
+
     scanner = new Html5Qrcode('qr-reader');
     scanner.start(
       { facingMode: 'environment' },
@@ -581,7 +596,6 @@
     [0,1,2,3,4,5].forEach(i => document.getElementById(`d${i}`).value = '');
     showState('stateScan');
     switchTab('qr');
-    if (!scannerActive) startScanner();
   }
 
   // Init
