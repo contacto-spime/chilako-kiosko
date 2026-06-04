@@ -592,7 +592,16 @@
         banner.style.display = 'flex';
         document.getElementById('rewardTitle').textContent = `🎉 ¡Premio: ${data.rewardUnlocked.name}!`;
         const couponHtml = data.rewardUnlocked.couponCode
-          ? `<div style="margin-top:8px;background:rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-family:monospace;font-size:18px;font-weight:900;letter-spacing:3px;color:white">${data.rewardUnlocked.couponCode}</div><div style="font-size:11px;margin-top:4px;opacity:0.85">⚠️ Ingresa este código en Odoo POS para aplicar el descuento</div>`
+          ? `<div style="margin-top:10px">
+               <div style="background:rgba(255,255,255,0.2);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:22px;font-weight:900;letter-spacing:4px;color:white;text-align:center">
+                 ${data.rewardUnlocked.couponCode}
+               </div>
+               <button onclick="copyCoupon('${data.rewardUnlocked.couponCode}', this)"
+                 style="margin-top:8px;width:100%;background:white;color:#2E8B3A;border:none;border-radius:8px;padding:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+                 📋 Copiar código para Odoo POS
+               </button>
+               <div style="font-size:11px;margin-top:6px;opacity:0.85;text-align:center">⚠️ Pega este código en "Ingresar código" dentro del POS</div>
+             </div>`
           : '';
         document.getElementById('rewardDesc').innerHTML = couponHtml;
         if (data.cycleReset) {
@@ -615,6 +624,26 @@
     [0,1,2,3,4,5].forEach(i => document.getElementById(`d${i}`).value = '');
     showState('stateScan');
     switchTab('qr');
+  }
+
+  // ── COPY COUPON ─────────────────────────────────────────────────────────────
+  async function copyCoupon(code, btn) {
+    try {
+      await navigator.clipboard.writeText(code);
+      btn.innerHTML = '✅ ¡Copiado!';
+      btn.style.background = '#4CAF58';
+      btn.style.color = 'white';
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copiar código para Odoo POS';
+        btn.style.background = 'white';
+        btn.style.color = '#2E8B3A';
+      }, 2500);
+    } catch {
+      // Fallback for older browsers
+      btn.innerHTML = code;
+      btn.style.fontFamily = 'monospace';
+      btn.style.letterSpacing = '2px';
+    }
   }
 
   // Init — camera requires user tap on iOS, button is shown by default
