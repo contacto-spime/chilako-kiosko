@@ -413,16 +413,32 @@
     document.getElementById('qr-reader').innerHTML = '';
   }
 
-  async function openCamera() {
-    // Hide button, show hint
+  async function openCamera(deviceId = null) {
     document.getElementById('cameraBtn').style.display = 'none';
     document.getElementById('scanHint').style.display = 'flex';
 
     await stopScanner();
 
+    // If no deviceId specified, check how many cameras are available
+    if (!deviceId) {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices.length > 1) {
+          // Multiple cameras — show selector
+          showCameraSelector(devices);
+          document.getElementById('cameraBtn').style.display = 'none';
+          document.getElementById('scanHint').style.display = 'none';
+          return;
+        }
+      } catch(e) {}
+    }
+
+    // Single camera or specific deviceId selected — start directly
+    const cameraConfig = deviceId ? deviceId : { facingMode: 'environment' };
+
     scanner = new Html5Qrcode('qr-reader');
     scanner.start(
-      { facingMode: 'environment' },
+      cameraConfig,
       { fps: 10, qrbox: { width: 240, height: 240 } },
       (decoded) => {
         scanner.stop().catch(()=>{});
@@ -437,6 +453,26 @@
       document.getElementById('cameraBtn').style.display = 'block';
       document.getElementById('scanHint').style.display = 'none';
     });
+  }
+
+  function showCameraSelector(devices) {
+    document.getElementById('qr-reader').innerHTML = `
+      <div style="background:white;border-radius:16px;padding:20px;text-align:center">
+        <div style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:#1a1a1a;margin-bottom:14px">
+          📷 Selecciona la cámara
+        </div>
+        ${devices.map(d => `
+          <button onclick="openCamera('${d.id}')"
+            style="display:block;width:100%;margin-bottom:8px;padding:12px 16px;background:#f5f0e8;border:2px solid #ede8df;border-radius:12px;font-family:'Nunito Sans',sans-serif;font-size:14px;font-weight:600;color:#1a1a1a;cursor:pointer;text-align:left">
+            ${d.label || 'Cámara ' + (devices.indexOf(d) + 1)}
+          </button>
+        `).join('')}
+        <button onclick="startScanner()"
+          style="margin-top:4px;background:transparent;border:none;color:#666;font-size:12px;cursor:pointer;font-family:'Nunito Sans',sans-serif">
+          Cancelar
+        </button>
+      </div>
+    `;
   }
 
   // startScanner now just resets the QR tab UI (camera requires user tap)
